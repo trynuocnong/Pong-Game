@@ -5,7 +5,7 @@ let boardHeight = 800;
 let context;
 
 //player
-let playerWidth = 180; //500 for testing, 80 for normal
+let playerWidth = 180; //1600 for testing, 180 for normal
 let playerHeight = 20;
 let playerVelocityX = 100;
 
@@ -84,6 +84,7 @@ let blockX = 35;
 let blockY = 45;
 
 let score = 0;
+let randomNumber = 0;
 let gameOver = false;
 
 
@@ -133,10 +134,19 @@ function update() {
     ball.y += ball.velocityY;
     context.fillRect(ball.x, ball.y, ball.width, ball.height)
 
-    //bounce ball off walls
-    if (ball.y <= 0) {
-        ball.velocityY *= -1; //reverse direction
 
+    //bounce ball off walls
+    if (ball.y <= 0) { //if ball touches top of canvas
+        if (changingDirection(ball)) { // check if ball.x changes direction
+            randomAngle = Math.floor(Math.random() * 360) + 1; // Random 0-360 degrees
+            ball.velocityX = Math.cos(randomAngle * Math.PI / 180); // Convert degree to radians for cosine
+            ball.velocityY *= -1;
+            randomNumber = ball.velocityX;
+            !changingDirection(); //set it to false to bounce off top canvas normal then
+        }
+        else {  //if ball.x changed then bounce off normal
+            ball.velocityY *= -1; //reverse direction
+    }
     }
     else if (ball.x <= 0 || (ball.x + ball.width) >= boardWidth) {
         //if ball touches left or right of canvas
@@ -267,6 +277,10 @@ function update() {
     //score
     context.font = "20px sans-serif"
     context.fillText(score, 10, 25);
+
+    //random
+    context.font = "20px sans-serif"
+    context.fillText(randomNumber, 1520, 25);
 }
 
 function outOfBounds(xPosition) {
@@ -422,4 +436,15 @@ function resetGame() {
     blockRows = 3;
     score = 0;
     createBlocks();
+}
+
+// check if ball.x changes
+function changingDirection(ball) {
+    // Get ball's X position before and after
+    ballX1 = ball.x;
+    ballX2 = ballX1 + ball.velocityX;
+
+    // Check if ball.x is change
+    //if ball.x didn't change return true;
+    return ballX1 == ballX2;
 }
