@@ -5,7 +5,7 @@ let boardHeight = 800;
 let context;
 
 //player
-let playerWidth = 180; //1600 for testing, 180 for normal
+let playerWidth = 1600; //1600 for testing, 180 for normal
 let playerHeight = 20;
 let playerVelocityX = 100;
 
@@ -40,14 +40,14 @@ let playerOuterLeft = {
     velocityX: playerVelocityX
 }
 let playerInnerRight = {
-    x: playerCenter.x + player.width / 4,
+    x: playerCenter.x + player.width / 8,
     y: player.y,
     width: player.width / 4,
     height: playerHeight,
     velocityX: playerVelocityX
 }
 let playerOuterRight = {
-    x: playerCenter.x + player.width / 16 + player.width / 4,
+    x: playerCenter.x + player.width / 8 + player.width / 4,
     y: player.y,
     width: 3 * player.width / 16,
     height: playerHeight,
@@ -57,8 +57,8 @@ let playerOuterRight = {
 //ball
 let ballWidth = 15;
 let ballHeight = 15;
-let ballVelocityX = 3; //15 for testing, 3 normal
-let ballVelocityY = 2; //10 for testing, 2 normal
+let ballVelocityX = 15; //15 for testing, 3 normal
+let ballVelocityY = 10; //10 for testing, 2 normal
 
 let ball = {
     x: boardWidth/2,
@@ -78,6 +78,7 @@ let blockColumns = 12;
 let blockRows = 3; //add more as game goes on
 let blockMaxRows = 10; //limit how many rows
 let blockCount = 0;
+let hitCount = 0;
 
 //starting block corner top left
 let blockX = 35;
@@ -122,10 +123,13 @@ function update() {
     context.fillStyle = "lightgreen";
     context.fillRect(player.x, player.y, player.width, player.height);
     //parts of player
+    context.fillStyle = "red";
     context.fillRect(playerCenter.x, playerCenter.y, playerCenter.width, playerCenter.height);
+    context.fillStyle = "green";
     context.fillRect(playerInnerLeft.x, playerInnerLeft.y, playerInnerLeft.width, playerInnerLeft.height);
-    context.fillRect(playerOuterLeft.x, playerOuterLeft.y, playerOuterLeft.width, playerOuterLeft.height);
     context.fillRect(playerInnerRight.x, playerInnerRight.y, playerInnerRight.width, playerInnerRight.height);
+    context.fillStyle = "blue";
+    context.fillRect(playerOuterLeft.x, playerOuterLeft.y, playerOuterLeft.width, playerOuterLeft.height);
     context.fillRect(playerOuterRight.x, playerOuterRight.y, playerOuterRight.width, playerOuterRight.height);
 
 
@@ -251,18 +255,26 @@ function update() {
     for (let i = 0; i < blockArray.length; i++) {
         let block = blockArray[i];
         if (!block.break) {
+            
             if (topCollision(ball, block) || bottomCollision(ball, block)) {
-                block.break =  true;
+                block.hitCount--;
                 ball.velocityY *= -1; //flip y direction up or down
-                blockCount -= 1;
-                score +=100;
+                
+                if (block.hitCount == 0) {
+                    block.break = true;
+                    blockCount -= 1;
+                    score += 100;
+                }
             }
             else if(leftCollision(ball, block) || rightCollision(ball, block)) {
-                block.break = true;
-                ball.velocityX *= -2;
-                blockCount -= 1;
-                score +=100;
+                block.hitCount--;
+                ball.velocityX *= -1;
 
+                if (block.hitCount == 0) {
+                    block.break = true;
+                    blockCount -= 1;
+                    score += 100;
+                }
             }
             context.fillRect(block.x, block.y, block.width, block.height);
         }
@@ -277,6 +289,16 @@ function update() {
     //score
     context.font = "20px sans-serif"
     context.fillText(score, 10, 25);
+
+//hitcount
+for (let i = 0; i < blockArray.length; i++) {
+    let block = blockArray[i];
+        if (!block.break) {
+            context.fillStyle = "black";
+            context.font = "20px Arial";
+            context.fillText(block.hitCount, block.x + block.width / 2 - 10, block.y + block.height / 2 + 10);
+    }
+}
 
     //random
     context.font = "20px sans-serif"
@@ -363,13 +385,14 @@ function rightCollision(ball, block) { //a is below b (ball is below block)
 function createBlocks() {
     blockArray = []; //clear blockArray
     for (let c = 0; c < blockColumns; c++) {
-        for (let r = 0; r < blockRows; r++) {
+        for (let r = blockRows; r > 0; r--) {
             let block = {
+                hitCount: r, // start with the highest hitCount at the top row
                 x : blockX + c*blockWidth + c*30, //c*10 space 10 pixels apart columns
-                y: blockY + r*blockHeight + r*20, //r*10 space 10 pixels apart rows
+                y: blockY + (blockRows - r)*blockHeight + (blockRows - r)*20, //r*10 space 10 pixels apart rows
                 width : blockWidth,
                 height : blockHeight,
-                break : false
+                break : false,
             }
             blockArray.push(block);
         }
@@ -387,41 +410,41 @@ function resetGame() {
         velocityX: playerVelocityX
     }
     //parts of player
-    playerCenter = {
-        x: player.x + player.width / 2 - (player.width / 16),
-        y: player.y,
-        width: player.width / 8,
-        height: playerHeight,
-        velocityX: playerVelocityX
-    }
-    playerInnerLeft = {
-        x: playerCenter.x - player.width / 4,
-        y: player.y,
-        width: player.width / 4,
-        height: playerHeight,
-        velocityX: playerVelocityX
-    }
-    playerOuterLeft = {
-        x: player.x,
-        y: player.y,
-        width: 3 * player.width / 16,
-        height: playerHeight,
-        velocityX: playerVelocityX
-    }
-    playerInnerRight = {
-        x: playerCenter.x + player.width / 4,
-        y: player.y,
-        width: player.width / 4,
-        height: playerHeight,
-        velocityX: playerVelocityX
-    }
-    playerOuterRight = {
-        x: playerCenter.x + player.width / 16 + player.width / 4,
-        y: player.y,
-        width: 3 * player.width / 16,
-        height: playerHeight,
-        velocityX: playerVelocityX
-    }
+ playerCenter = {
+    x: player.x + player.width / 2 - (player.width / 16),
+    y: player.y,
+    width: player.width / 8,
+    height: playerHeight,
+    velocityX: playerVelocityX
+}
+ playerInnerLeft = {
+    x: playerCenter.x - player.width / 4,
+    y: player.y,
+    width: player.width / 4,
+    height: playerHeight,
+    velocityX: playerVelocityX
+}
+ playerOuterLeft = {
+    x: player.x,
+    y: player.y,
+    width: 3 * player.width / 16,
+    height: playerHeight,
+    velocityX: playerVelocityX
+}
+ playerInnerRight = {
+    x: playerCenter.x + player.width / 8,
+    y: player.y,
+    width: player.width / 4,
+    height: playerHeight,
+    velocityX: playerVelocityX
+}
+ playerOuterRight = {
+    x: playerCenter.x + player.width / 8 + player.width / 4,
+    y: player.y,
+    width: 3 * player.width / 16,
+    height: playerHeight,
+    velocityX: playerVelocityX
+}
     
     ball = {
         x: boardWidth/2,
