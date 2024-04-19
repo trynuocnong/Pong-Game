@@ -1,16 +1,17 @@
 //board
 let board;
-let boardWidth =  1600;
+let boardWidth = 1600;
 let boardHeight = 800;
 let context;
+let gameStarted = false;
 
 //player
-let playerWidth = 1600; //1600 for testing, 180 for normal
+let playerWidth = 180; //1600 for testing, 180 for normal
 let playerHeight = 20;
 let playerVelocityX = 100;
 
 let player = {
-    x: boardWidth/2 - playerWidth/2,
+    x: boardWidth / 2 - playerWidth / 2,
     y: boardHeight - playerHeight - 5,
     width: playerWidth,
     height: playerHeight,
@@ -57,17 +58,16 @@ let playerOuterRight = {
 //ball
 let ballWidth = 15;
 let ballHeight = 15;
-let ballVelocityX = 15; //15 for testing, 3 normal
-let ballVelocityY = 10; //10 for testing, 2 normal
+let ballVelocityX = 3; //15 for testing, 3 normal
+let ballVelocityY = 2; //10 for testing, 2 normal
 
 let ball = {
-    x: boardWidth/2,
-    y: boardHeight/2,
+    x: player.x + (player.width / 2) - (ballWidth / 2), // Đặt x ở đây
+    y: player.y - ballHeight - 1, // Đặt y ở đây
     width: ballWidth,
     height: ballHeight,
-    velocityX : ballVelocityX,
+    velocityX: ballVelocityX,
     velocityY: ballVelocityY
-
 }
 
 //blocks
@@ -89,7 +89,7 @@ let randomNumber = 0;
 let gameOver = false;
 
 
-window.onload = function() {
+window.onload = function () {
     board = document.getElementById("board");
     board.height = boardHeight;
     board.width = boardWidth;
@@ -106,7 +106,7 @@ window.onload = function() {
 
 
     requestAnimationFrame(update);
-    document.addEventListener("keydown", movePlayer);
+    document.addEventListener("keydown", handleKeyPress);
 
     //create blocks
     createBlocks();
@@ -114,11 +114,11 @@ window.onload = function() {
 
 function update() {
     requestAnimationFrame(update);
-    if(gameOver) {
+    if (gameOver) {
         return;
     }
     context.clearRect(0, 0, board.width, board.height);
-    
+
     //player
     context.fillStyle = "lightgreen";
     context.fillRect(player.x, player.y, player.width, player.height);
@@ -134,10 +134,12 @@ function update() {
 
 
     context.fillStyle = "white";
-    ball.x += ball.velocityX;
-    ball.y += ball.velocityY;
     context.fillRect(ball.x, ball.y, ball.width, ball.height)
 
+    if (gameStarted) {
+        ball.x += ball.velocityX;
+        ball.y += ball.velocityY;
+    }
 
     //bounce ball off walls
     if (ball.y <= 0) { //if ball touches top of canvas
@@ -150,7 +152,7 @@ function update() {
         }
         else {  //if ball.x changed then bounce off normal
             ball.velocityY *= -1; //reverse direction
-    }
+        }
     }
     else if (ball.x <= 0 || (ball.x + ball.width) >= boardWidth) {
         //if ball touches left or right of canvas
@@ -160,87 +162,87 @@ function update() {
         //if ball touches bottom of canvas 
         //game over
         context.font = "25px sans-serif";
-        context.fillText("Game Over: Press 'Space' to Restart", 600, 400);
+        context.fillText("Game Over: Press 'Arrow Down' to Restart", 560, 400);
         gameOver = true;
     }
 
     //bounce the ball off player paddle
-    if(topCollision(ball, player) || bottomCollision(ball, player)) {
-    if(topCollision(ball, playerCenter) || bottomCollision(ball, playerCenter)) {
-        ball.velocityX = 0;
-        ball.velocityY *= -1;
-    }
-    else if (topCollision(ball, playerInnerLeft) || bottomCollision(ball, playerInnerLeft)) {
-           // Calculate the intersection point of the ball and the paddle
-           let intersectionX = ball.x + ball.width / 2;
-    
-           // Calculate the distance from the intersection point to the paddle's center
-           let distanceFromCenter = intersectionX - (player.x + player.width / 2);
-           
-           // Normalize the distance to the range [-1, 1]
-           let normalizedDistance = distanceFromCenter / (player.width / 2);
-       
-           // Calculate the new velocities
-           ball.velocityX = normalizedDistance * ballVelocityX;
-           ball.velocityY = -Math.sqrt(ballVelocityX ** 2 - ball.velocityX ** 2);
-    }
-    else if (topCollision(ball, playerInnerRight) || bottomCollision(ball, playerInnerRight)) {
-           // Calculate the intersection point of the ball and the paddle
-           let intersectionX = ball.x + ball.width / 2;
-    
-           // Calculate the distance from the intersection point to the paddle's center
-           let distanceFromCenter = intersectionX - (player.x + player.width / 2);
-           
-           // Normalize the distance to the range [-1, 1]
-           let normalizedDistance = distanceFromCenter / (player.width / 2);
-       
-           // Calculate the new velocities
-           ball.velocityX = normalizedDistance * ballVelocityX;
-           ball.velocityY = -Math.sqrt(ballVelocityX ** 2 - ball.velocityX ** 2);
+    if (topCollision(ball, player) || bottomCollision(ball, player)) {
+        if (topCollision(ball, playerCenter) || bottomCollision(ball, playerCenter)) {
+            ball.velocityX = 0;
+            ball.velocityY *= -1;
+        }
+        else if (topCollision(ball, playerInnerLeft) || bottomCollision(ball, playerInnerLeft)) {
+            // Calculate the intersection point of the ball and the paddle
+            let intersectionX = ball.x + ball.width / 2;
 
-    }
-    else if (topCollision(ball, playerOuterLeft) || bottomCollision(ball, playerOuterLeft)) {
-        ball.velocityY *= -1;
-    }
-    else if (topCollision(ball, playerOuterRight) || bottomCollision(ball, playerOuterRight)) {
-        ball.velocityY *= -1;    
-    }
-    else{
-        ball.velocityY *= -1;
-    }
+            // Calculate the distance from the intersection point to the paddle's center
+            let distanceFromCenter = intersectionX - (player.x + player.width / 2);
+
+            // Normalize the distance to the range [-1, 1]
+            let normalizedDistance = distanceFromCenter / (player.width / 2);
+
+            // Calculate the new velocities
+            ball.velocityX = normalizedDistance * ballVelocityX;
+            ball.velocityY = -Math.sqrt(ballVelocityX ** 2 - ball.velocityX ** 2);
+        }
+        else if (topCollision(ball, playerInnerRight) || bottomCollision(ball, playerInnerRight)) {
+            // Calculate the intersection point of the ball and the paddle
+            let intersectionX = ball.x + ball.width / 2;
+
+            // Calculate the distance from the intersection point to the paddle's center
+            let distanceFromCenter = intersectionX - (player.x + player.width / 2);
+
+            // Normalize the distance to the range [-1, 1]
+            let normalizedDistance = distanceFromCenter / (player.width / 2);
+
+            // Calculate the new velocities
+            ball.velocityX = normalizedDistance * ballVelocityX;
+            ball.velocityY = -Math.sqrt(ballVelocityX ** 2 - ball.velocityX ** 2);
+
+        }
+        else if (topCollision(ball, playerOuterLeft) || bottomCollision(ball, playerOuterLeft)) {
+            ball.velocityY *= -1;
+        }
+        else if (topCollision(ball, playerOuterRight) || bottomCollision(ball, playerOuterRight)) {
+            ball.velocityY *= -1;
+        }
+        else {
+            ball.velocityY *= -1;
+        }
     }
     else if (leftCollision(ball, player) || rightCollision(ball, player)) {
-        if(leftCollision(ball, playerCenter) || rightCollision(ball, playerCenter)) {
+        if (leftCollision(ball, playerCenter) || rightCollision(ball, playerCenter)) {
             ball.velocityX *= -1;
             ball.velocityY = 0;
         }
         else if (leftCollision(ball, playerInnerLeft) || rightCollision(ball, playerInnerLeft)) {
-           // Calculate the intersection point of the ball and the paddle
-           let intersectionX = ball.x + ball.width / 2;
-    
-           // Calculate the distance from the intersection point to the paddle's center
-           let distanceFromCenter = intersectionX - (player.x + player.width / 2);
-           
-           // Normalize the distance to the range [-1, 1]
-           let normalizedDistance = distanceFromCenter / (player.width / 2);
-       
-           // Calculate the new velocities
-           ball.velocityX = normalizedDistance * ballVelocityX;
-           ball.velocityY = -Math.sqrt(ballVelocityX ** 2 - ball.velocityX ** 2);    
+            // Calculate the intersection point of the ball and the paddle
+            let intersectionX = ball.x + ball.width / 2;
+
+            // Calculate the distance from the intersection point to the paddle's center
+            let distanceFromCenter = intersectionX - (player.x + player.width / 2);
+
+            // Normalize the distance to the range [-1, 1]
+            let normalizedDistance = distanceFromCenter / (player.width / 2);
+
+            // Calculate the new velocities
+            ball.velocityX = normalizedDistance * ballVelocityX;
+            ball.velocityY = -Math.sqrt(ballVelocityX ** 2 - ball.velocityX ** 2);
         }
         else if (leftCollision(ball, playerInnerRight) || rightCollision(ball, playerInnerRight)) {
-           // Calculate the intersection point of the ball and the paddle
-    let intersectionX = ball.x + ball.width / 2;
-    
-    // Calculate the distance from the intersection point to the paddle's center
-    let distanceFromCenter = intersectionX - (player.x + player.width / 2);
-    
-    // Normalize the distance to the range [-1, 1]
-    let normalizedDistance = distanceFromCenter / (player.width / 2);
+            // Calculate the intersection point of the ball and the paddle
+            let intersectionX = ball.x + ball.width / 2;
 
-    // Calculate the new velocities
-    ball.velocityX = normalizedDistance * ballVelocityX;
-    ball.velocityY = -Math.sqrt(ballVelocityX ** 2 - ball.velocityX ** 2);    
+            // Calculate the distance from the intersection point to the paddle's center
+            let distanceFromCenter = intersectionX - (player.x + player.width / 2);
+
+            // Normalize the distance to the range [-1, 1]
+            let normalizedDistance = distanceFromCenter / (player.width / 2);
+
+            // Calculate the new velocities
+            ball.velocityX = normalizedDistance * ballVelocityX;
+            ball.velocityY = -Math.sqrt(ballVelocityX ** 2 - ball.velocityX ** 2);
         }
         else if (leftCollision(ball, playerOuterLeft) || rightCollision(ball, playerOuterLeft)) {
             ball.velocityX *= -1;
@@ -255,18 +257,18 @@ function update() {
     for (let i = 0; i < blockArray.length; i++) {
         let block = blockArray[i];
         if (!block.break) {
-            
+
             if (topCollision(ball, block) || bottomCollision(ball, block)) {
                 block.hitCount--;
                 ball.velocityY *= -1; //flip y direction up or down
-                
+
                 if (block.hitCount == 0) {
                     block.break = true;
                     blockCount -= 1;
                     score += 100;
                 }
             }
-            else if(leftCollision(ball, block) || rightCollision(ball, block)) {
+            else if (leftCollision(ball, block) || rightCollision(ball, block)) {
                 block.hitCount--;
                 ball.velocityX *= -1;
 
@@ -281,8 +283,8 @@ function update() {
     }
 
     //next level
-    if(blockCount == 0) {
-        score += 100*blockRows*blockColumns; //bonus point
+    if (blockCount == 0) {
+        score += 100 * blockRows * blockColumns; //bonus point
         blockRows = Math.min(blockRows + 1, blockMaxRows);
         createBlocks();
     }
@@ -290,15 +292,20 @@ function update() {
     context.font = "20px sans-serif"
     context.fillText(score, 10, 25);
 
-//hitcount
-for (let i = 0; i < blockArray.length; i++) {
-    let block = blockArray[i];
-        if (!block.break) {
-            context.fillStyle = "black";
-            context.font = "20px Arial";
-            context.fillText(block.hitCount, block.x + block.width / 2 - 10, block.y + block.height / 2 + 10);
+    //hitcount
+    for (let i = 0; i < blockArray.length; i++) {
+        let block = blockArray[i];
+        context.fillStyle = "black";
+        context.font = "20px Arial";
+        context.fillText(block.hitCount, block.x + block.width / 2 - 10, block.y + block.height / 2 + 10);
     }
-}
+
+    if (!gameStarted) {
+        context.fillStyle = "red";
+        context.font = "25px sans-serif";
+        context.fillText("Move around and press 'Arrow Up' to release the ball", 500, 400);
+        return;
+    }
 
     //random
     context.font = "20px sans-serif"
@@ -311,59 +318,59 @@ function outOfBounds(xPosition) {
 }
 
 function movePlayer(e) {
-    if(gameOver) {
-        if (e.code == "Space") {
-            resetGame();
-        }
-    }
-    if (e.code == "ArrowLeft") {
-        let nextPlayerX = player.x - player.velocityX;
-        //parts of player
-        let nextPlayerCenterX = playerCenter.x - playerCenter.velocityX;
-        let nextPlayerInnerLeftX = playerInnerLeft.x - playerInnerLeft.velocityX;
-        let nextPlayerOuterLeftX = playerOuterLeft.x - playerOuterLeft.velocityX;
-        let nextPlayerInnerRightX = playerInnerRight.x - playerInnerRight.velocityX;
-        let nextPlayerOuterRightX = playerOuterRight.x - playerOuterRight.velocityX;
 
-        if(!outOfBounds(nextPlayerX)) {
-            player.x = nextPlayerX;
-
+    if (!gameStarted) { //ball hasn't been released, game have not started yet
+        if (e.code == "ArrowLeft" || e.code == "ArrowRight") {
+            let nextPlayerX = e.code == "ArrowLeft" ? player.x - player.velocityX : player.x + player.velocityX;
+            let nextBallX = nextPlayerX + (player.width / 2) - (ball.width / 2);
             //parts of player
-            playerCenter.x = nextPlayerCenterX;
-            playerInnerLeft.x =  nextPlayerInnerLeftX;
-            playerOuterLeft.x = nextPlayerOuterLeftX;
-            playerInnerRight.x = nextPlayerInnerRightX;
-            playerOuterRight.x = nextPlayerOuterRightX;
+            let nextPlayerCenterX = nextPlayerX + player.width / 2 - (player.width / 16);
+            let nextPlayerInnerLeftX = nextPlayerCenterX - player.width / 4;
+            let nextPlayerOuterLeftX = nextPlayerX;
+            let nextPlayerInnerRightX = nextPlayerCenterX + player.width / 8;
+            let nextPlayerOuterRightX = nextPlayerCenterX + player.width / 8 + player.width / 4;
+
+            if (!outOfBounds(nextPlayerX)) {
+                player.x = nextPlayerX;
+                ball.x = nextBallX;
+
+                //parts of player
+                playerCenter.x = nextPlayerCenterX;
+                playerInnerLeft.x = nextPlayerInnerLeftX;
+                playerOuterLeft.x = nextPlayerOuterLeftX;
+                playerInnerRight.x = nextPlayerInnerRightX;
+                playerOuterRight.x = nextPlayerOuterRightX;
+            }
         }
-
-    }
-    else if (e.code == "ArrowRight") {
-        let nextPlayerX = player.x + player.velocityX;
-
-        //parts of player
-        let nextPlayerCenterX = playerCenter.x + playerCenter.velocityX;
-        let nextPlayerInnerLeftX = playerInnerLeft.x + playerInnerLeft.velocityX;
-        let nextPlayerOuterLeftX = playerOuterLeft.x + playerOuterLeft.velocityX;
-        let nextPlayerInnerRightX = playerInnerRight.x + playerInnerRight.velocityX;
-        let nextPlayerOuterRightX = playerOuterRight.x + playerOuterRight.velocityX;
-        if(!outOfBounds(nextPlayerX)) {
-            player.x = nextPlayerX;
-
+    } else { //game started
+        if (e.code == "ArrowLeft" || e.code == "ArrowRight") {
+            let nextPlayerX = e.code == "ArrowLeft" ? player.x - player.velocityX : player.x + player.velocityX;
             //parts of player
-            playerCenter.x = nextPlayerCenterX;
-            playerInnerLeft.x =  nextPlayerInnerLeftX;
-            playerOuterLeft.x = nextPlayerOuterLeftX;
-            playerInnerRight.x = nextPlayerInnerRightX;
-            playerOuterRight.x = nextPlayerOuterRightX;
+            let nextPlayerCenterX = nextPlayerX + player.width / 2 - (player.width / 16);
+            let nextPlayerInnerLeftX = nextPlayerCenterX - player.width / 4;
+            let nextPlayerOuterLeftX = nextPlayerX;
+            let nextPlayerInnerRightX = nextPlayerCenterX + player.width / 8;
+            let nextPlayerOuterRightX = nextPlayerCenterX + player.width / 8 + player.width / 4;
+            if (!outOfBounds(nextPlayerX)) {
+                player.x = nextPlayerX;
+                //parts of player
+                playerCenter.x = nextPlayerCenterX;
+                playerInnerLeft.x = nextPlayerInnerLeftX;
+                playerOuterLeft.x = nextPlayerOuterLeftX;
+                playerInnerRight.x = nextPlayerInnerRightX;
+                playerOuterRight.x = nextPlayerOuterRightX;
+
+            }
         }
     }
 }
 
+
 function detectCollision(a, b) {
     return a.x < b.x + b.width && //a's top left corner doesn't reach b's top right corner
-            a.x + a.width > b.x && //a's top right corner passes b's top left corner
-            a.y < b.y + b.height && //a's top left corner doesn't reach b's bottom left corner
-            a.y + a.height > b.y; //a's bottom left corner passes b's top left corner
+        a.x + a.width > b.x && //a's top right corner passes b's top left corner
+        a.y < b.y + b.height && //a's top left corner doesn't reach b's bottom left corner
+        a.y + a.height > b.y; //a's bottom left corner passes b's top left corner
 }
 
 function topCollision(ball, block) { //a is above b (ball is above block)
@@ -388,11 +395,11 @@ function createBlocks() {
         for (let r = blockRows; r > 0; r--) {
             let block = {
                 hitCount: r, // start with the highest hitCount at the top row
-                x : blockX + c*blockWidth + c*30, //c*10 space 10 pixels apart columns
-                y: blockY + (blockRows - r)*blockHeight + (blockRows - r)*20, //r*10 space 10 pixels apart rows
-                width : blockWidth,
-                height : blockHeight,
-                break : false,
+                x: blockX + c * blockWidth + c * 30, //c*10 space 10 pixels apart columns
+                y: blockY + (blockRows - r) * blockHeight + (blockRows - r) * 20, //r*10 space 10 pixels apart rows
+                width: blockWidth,
+                height: blockHeight,
+                break: false,
             }
             blockArray.push(block);
         }
@@ -401,59 +408,60 @@ function createBlocks() {
 }
 
 function resetGame() {
+    gameStarted = false;
     gameOver = false;
     player = {
-        x: boardWidth/2 - playerWidth/2,
+        x: boardWidth / 2 - playerWidth / 2,
         y: boardHeight - playerHeight - 5,
         width: playerWidth,
         height: playerHeight,
         velocityX: playerVelocityX
     }
     //parts of player
- playerCenter = {
-    x: player.x + player.width / 2 - (player.width / 16),
-    y: player.y,
-    width: player.width / 8,
-    height: playerHeight,
-    velocityX: playerVelocityX
-}
- playerInnerLeft = {
-    x: playerCenter.x - player.width / 4,
-    y: player.y,
-    width: player.width / 4,
-    height: playerHeight,
-    velocityX: playerVelocityX
-}
- playerOuterLeft = {
-    x: player.x,
-    y: player.y,
-    width: 3 * player.width / 16,
-    height: playerHeight,
-    velocityX: playerVelocityX
-}
- playerInnerRight = {
-    x: playerCenter.x + player.width / 8,
-    y: player.y,
-    width: player.width / 4,
-    height: playerHeight,
-    velocityX: playerVelocityX
-}
- playerOuterRight = {
-    x: playerCenter.x + player.width / 8 + player.width / 4,
-    y: player.y,
-    width: 3 * player.width / 16,
-    height: playerHeight,
-    velocityX: playerVelocityX
-}
-    
+    playerCenter = {
+        x: player.x + player.width / 2 - (player.width / 16),
+        y: player.y,
+        width: player.width / 8,
+        height: playerHeight,
+        velocityX: playerVelocityX
+    }
+    playerInnerLeft = {
+        x: playerCenter.x - player.width / 4,
+        y: player.y,
+        width: player.width / 4,
+        height: playerHeight,
+        velocityX: playerVelocityX
+    }
+    playerOuterLeft = {
+        x: player.x,
+        y: player.y,
+        width: 3 * player.width / 16,
+        height: playerHeight,
+        velocityX: playerVelocityX
+    }
+    playerInnerRight = {
+        x: playerCenter.x + player.width / 8,
+        y: player.y,
+        width: player.width / 4,
+        height: playerHeight,
+        velocityX: playerVelocityX
+    }
+    playerOuterRight = {
+        x: playerCenter.x + player.width / 8 + player.width / 4,
+        y: player.y,
+        width: 3 * player.width / 16,
+        height: playerHeight,
+        velocityX: playerVelocityX
+    }
+
     ball = {
-        x: boardWidth/2,
-        y: boardHeight/2,
+        x: player.x + (player.width / 2) - (ball.width / 2),
+        y: player.y - ball.height - 1,
         width: ballWidth,
         height: ballHeight,
-        velocityX : ballVelocityX,
+        velocityX: ballVelocityX,
         velocityY: ballVelocityY
-    
+
     }
     blockArray = [];
     blockRows = 3;
@@ -470,4 +478,39 @@ function changingDirection(ball) {
     // Check if ball.x is change
     //if ball.x didn't change return true;
     return ballX1 == ballX2;
+}
+
+function handleKeyPress(e) {
+    if (!gameStarted) { //Game hasn't start yet
+        movePlayer(e);
+    } else { //Game started
+        if (e.code == "ArrowLeft" || e.code == "ArrowRight") {
+            movePlayer(e);
+        }
+    }
+
+    if (e.code == "ArrowUp" && !gameStarted) {
+        startGame();
+    }
+
+    if (e.code == "ArrowDown" && gameOver) {
+        resetGame();
+    }
+}
+
+function startGame() {
+    gameStarted = true; // start game
+
+    // Ball initial postion
+    ball.x = player.x + (player.width / 2) - (ball.width / 2);
+    ball.y = player.y - ball.height - 1;
+
+    // Ball initial velocity // direction
+
+    randomVelocityX = Math.floor(Math.random() * 360) + 1; // Random 0-360 degrees
+    ball.velocityX = Math.cos(randomVelocityX * Math.PI / 180); // Convert degree to radians for cosine
+    ball.velocityY *= -1;
+
+    // Ball direction
+    ball.velocityY = -Math.abs(ball.velocityY); // Ball up
 }
