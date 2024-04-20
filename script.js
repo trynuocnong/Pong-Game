@@ -60,6 +60,7 @@ let ballWidth = 15;
 let ballHeight = 15;
 let ballVelocityX = 3; //15 for testing, 3 normal
 let ballVelocityY = 2; //10 for testing, 2 normal
+let lastCollision = [null, null];
 
 let ball = {
     x: player.x + (player.width / 2) - (ballWidth / 2), // Đặt x ở đây
@@ -143,19 +144,28 @@ function update() {
 
     //bounce ball off walls
     if (ball.y <= 0) { //if ball touches top of canvas
-        if (changingDirection(ball)) { // check if ball.x changes direction
+        lastCollision[1] = lastCollision[0]; // lastCollision become old lastCollision
+        lastCollision[0] = { x: ball.x, y: 0, velocityX: ball.velocityX, velocityY: ball.velocityY }; //set ball.y = 0
+        lastCollision = [lastCollision[0], lastCollision[1]];
+
+        if (lastCollision[0].x == lastCollision[1].x) { // check if ball.x changes direction
             randomAngle = Math.floor(Math.random() * 360) + 1; // Random 0-360 degrees
             ball.velocityX = Math.cos(randomAngle * Math.PI / 180); // Convert degree to radians for cosine
             ball.velocityY *= -1;
             randomNumber = ball.velocityX;
-            !changingDirection(); //set it to false to bounce off top canvas normal then
         }
         else {  //if ball.x changed then bounce off normal
             ball.velocityY *= -1; //reverse direction
         }
     }
     else if (ball.x <= 0 || (ball.x + ball.width) >= boardWidth) {
-        //if ball touches left or right of canvas
+        lastCollision[1] = lastCollision[0]; // lastCollision become old lastCollision
+        lastCollision[0] = {
+            x: (ball.x <= 0) ? 0 : (ball.x + ball.width >= boardWidth) ? boardWidth : ball.x, //set ball.x = 0 || boardWidth
+            y: ball.y,
+            velocityX: ball.velocityX,
+            velocityY: ball.velocityY
+        };
         ball.velocityX *= -1; //reverse direction
     }
     else if (ball.y + ball.height >= boardHeight) {
@@ -169,10 +179,16 @@ function update() {
     //bounce the ball off player paddle
     if (topCollision(ball, player) || bottomCollision(ball, player)) {
         if (topCollision(ball, playerCenter) || bottomCollision(ball, playerCenter)) {
+            lastCollision[1] = lastCollision[0]; // lastCollision become old lastCollision
+            lastCollision[0] = { x: ball.x, y: ball.y, velocityX: ball.velocityX, velocityY: ball.velocityY };
+            lastCollision = [lastCollision[0], lastCollision[1]];
             ball.velocityX = 0;
             ball.velocityY *= -1;
         }
         else if (topCollision(ball, playerInnerLeft) || bottomCollision(ball, playerInnerLeft)) {
+            lastCollision[1] = lastCollision[0]; // lastCollision become old lastCollision
+            lastCollision[0] = { x: ball.x, y: ball.y, velocityX: ball.velocityX, velocityY: ball.velocityY };
+            lastCollision = [lastCollision[0], lastCollision[1]];
             // Calculate the intersection point of the ball and the paddle
             let intersectionX = ball.x + ball.width / 2;
 
@@ -187,6 +203,9 @@ function update() {
             ball.velocityY = -Math.sqrt(ballVelocityX ** 2 - ball.velocityX ** 2);
         }
         else if (topCollision(ball, playerInnerRight) || bottomCollision(ball, playerInnerRight)) {
+            lastCollision[1] = lastCollision[0]; // lastCollision become old lastCollision
+            lastCollision[0] = { x: ball.x, y: ball.y, velocityX: ball.velocityX, velocityY: ball.velocityY };
+            lastCollision = [lastCollision[0], lastCollision[1]];
             // Calculate the intersection point of the ball and the paddle
             let intersectionX = ball.x + ball.width / 2;
 
@@ -202,53 +221,59 @@ function update() {
 
         }
         else if (topCollision(ball, playerOuterLeft) || bottomCollision(ball, playerOuterLeft)) {
-            ball.velocityY *= -1;
+            lastCollision[1] = lastCollision[0]; // lastCollision become old lastCollision
+            lastCollision[0] = { x: ball.x, y: ball.y, velocityX: ball.velocityX, velocityY: ball.velocityY };
+            lastCollision = [lastCollision[0], lastCollision[1]];
+
+            // Xác định hướng va chạm
+            if (lastCollision[0].x > lastCollision[1].x) {
+                ball.velocityX = -Math.abs(ball.velocityX); // left to right, make it turn to right
+            } else {
+                ball.velocityX = -Math.abs(ball.velocityX); // right to left, make it turn to left
+            }
+            ball.velocityY *= -1; //turn to Oy
         }
+
         else if (topCollision(ball, playerOuterRight) || bottomCollision(ball, playerOuterRight)) {
-            ball.velocityY *= -1;
-        }
-        else {
-            ball.velocityY *= -1;
+            lastCollision[1] = lastCollision[0]; // lastCollision become old lastCollision
+            lastCollision[0] = { x: ball.x, y: ball.y, velocityX: ball.velocityX, velocityY: ball.velocityY };
+            lastCollision = [lastCollision[0], lastCollision[1]];
+
+            // Xác định hướng va chạm
+            if (lastCollision[0].x > lastCollision[1].x) {
+                ball.velocityX = -Math.abs(ball.velocityX); // left to right, make it turn to right
+            } else {
+                ball.velocityX = -Math.abs(ball.velocityX); // right to left, make it turn to left
+            }
+            ball.velocityY *= -1; //turn to Oy
         }
     }
     else if (leftCollision(ball, player) || rightCollision(ball, player)) {
-        if (leftCollision(ball, playerCenter) || rightCollision(ball, playerCenter)) {
-            ball.velocityX *= -1;
-            ball.velocityY = 0;
-        }
-        else if (leftCollision(ball, playerInnerLeft) || rightCollision(ball, playerInnerLeft)) {
-            // Calculate the intersection point of the ball and the paddle
-            let intersectionX = ball.x + ball.width / 2;
+        if (leftCollision(ball, playerOuterLeft) || rightCollision(ball, playerOuterLeft)) {
+            lastCollision[1] = lastCollision[0]; // lastCollision become old lastCollision
+            lastCollision[0] = { x: ball.x, y: ball.y, velocityX: ball.velocityX, velocityY: ball.velocityY };
+            lastCollision = [lastCollision[0], lastCollision[1]];
 
-            // Calculate the distance from the intersection point to the paddle's center
-            let distanceFromCenter = intersectionX - (player.x + player.width / 2);
-
-            // Normalize the distance to the range [-1, 1]
-            let normalizedDistance = distanceFromCenter / (player.width / 2);
-
-            // Calculate the new velocities
-            ball.velocityX = normalizedDistance * ballVelocityX;
-            ball.velocityY = -Math.sqrt(ballVelocityX ** 2 - ball.velocityX ** 2);
-        }
-        else if (leftCollision(ball, playerInnerRight) || rightCollision(ball, playerInnerRight)) {
-            // Calculate the intersection point of the ball and the paddle
-            let intersectionX = ball.x + ball.width / 2;
-
-            // Calculate the distance from the intersection point to the paddle's center
-            let distanceFromCenter = intersectionX - (player.x + player.width / 2);
-
-            // Normalize the distance to the range [-1, 1]
-            let normalizedDistance = distanceFromCenter / (player.width / 2);
-
-            // Calculate the new velocities
-            ball.velocityX = normalizedDistance * ballVelocityX;
-            ball.velocityY = -Math.sqrt(ballVelocityX ** 2 - ball.velocityX ** 2);
-        }
-        else if (leftCollision(ball, playerOuterLeft) || rightCollision(ball, playerOuterLeft)) {
-            ball.velocityX *= -1;
+            // Xác định hướng va chạm
+            if (lastCollision[0].x > lastCollision[1].x) {
+                ball.velocityX = -Math.abs(ball.velocityX); // left to right, make it turn to right
+            } else {
+                ball.velocityX = -Math.abs(ball.velocityX); // right to left, make it turn to left
+            }
+            ball.velocityX *= -1; //turn to Ox
         }
         else if (leftCollision(ball, playerOuterRight) || rightCollision(ball, playerOuterRight)) {
-            ball.velocityX *= -1;
+            lastCollision[1] = lastCollision[0]; // lastCollision become old lastCollision
+            lastCollision[0] = { x: ball.x, y: ball.y, velocityX: ball.velocityX, velocityY: ball.velocityY };
+            lastCollision = [lastCollision[0], lastCollision[1]];
+
+            // Xác định hướng va chạm
+            if (lastCollision[0].x > lastCollision[1].x) {
+                ball.velocityX = -Math.abs(ball.velocityX); // left to right, make it turn to right
+            } else {
+                ball.velocityX = -Math.abs(ball.velocityX); // right to left, make it turn to left
+            }
+            ball.velocityX *= -1; //turn to Ox
         }
     }
 
@@ -261,6 +286,9 @@ function update() {
             if (topCollision(ball, block) || bottomCollision(ball, block)) {
                 block.hitCount--;
                 ball.velocityY *= -1; //flip y direction up or down
+                lastCollision[1] = lastCollision[0]; // lastCollision become old lastCollision
+                lastCollision[0] = { x: ball.x, y: ball.y, velocityX: ball.velocityX, velocityY: ball.velocityY };
+                lastCollision = [lastCollision[0], lastCollision[1]];
 
                 if (block.hitCount == 0) {
                     block.break = true;
@@ -271,6 +299,9 @@ function update() {
             else if (leftCollision(ball, block) || rightCollision(ball, block)) {
                 block.hitCount--;
                 ball.velocityX *= -1;
+                lastCollision[1] = lastCollision[0]; // lastCollision become old lastCollision
+                lastCollision[0] = { x: ball.x, y: ball.y, velocityX: ball.velocityX, velocityY: ball.velocityY };
+                lastCollision = [lastCollision[0], lastCollision[1]];
 
                 if (block.hitCount == 0) {
                     block.break = true;
@@ -292,6 +323,7 @@ function update() {
     context.font = "20px sans-serif"
     context.fillText(score, 10, 25);
 
+
     //hitcount
     for (let i = 0; i < blockArray.length; i++) {
         let block = blockArray[i];
@@ -306,6 +338,11 @@ function update() {
         context.fillText("Move around and press 'Arrow Up' to release the ball", 500, 400);
         return;
     }
+
+    //lastCollision
+    context.fillStyle = "red";
+    context.font = "20px sans-serif"
+    context.fillText(lastCollision[0].x, 400, 25);
 
     //random
     context.font = "20px sans-serif"
@@ -467,17 +504,7 @@ function resetGame() {
     blockRows = 3;
     score = 0;
     createBlocks();
-}
-
-// check if ball.x changes
-function changingDirection(ball) {
-    // Get ball's X position before and after
-    ballX1 = ball.x;
-    ballX2 = ballX1 + ball.velocityX;
-
-    // Check if ball.x is change
-    //if ball.x didn't change return true;
-    return ballX1 == ballX2;
+    lastCollision = [null, null];
 }
 
 function handleKeyPress(e) {
@@ -513,4 +540,9 @@ function startGame() {
 
     // Ball direction
     ball.velocityY = -Math.abs(ball.velocityY); // Ball up
+
+    //lastCollision
+    // lastCollision[0] = { X: ball.x, y: ball.y, velocityX: ball.velocityX, velocityY: ball.velocityY }; //set it to ball released position
+    // lastCollision = [{ x: ball.x, y: ball.y, velocityX: ball.velocityX, velocityY: ball.velocityY }, null];
+    lastCollision = [null, null]; //no collision
 }
