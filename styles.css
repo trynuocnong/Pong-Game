@@ -1,6 +1,8 @@
+/* 21130596_NguyenThanhTu_0987823027_DH21DTD */
 body {
     text-align: center;
-    padding-top:100px;
+    padding-top:80px;
+    padding-left: 120px;
 }
 
 #board {
@@ -9,3 +11,11 @@ body {
     border-left: 5px solid skyblue;
     border-right: 5px solid skyblue;
 }
+
+#home {
+    background-color: black;
+    border-top: 5px solid skyblue;
+    border-left: 5px solid skyblue;
+    border-right: 5px solid skyblue;
+}
+
